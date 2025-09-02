@@ -565,7 +565,8 @@ const init = (config, _userConsent) => {
     // Store the profile configs globally
     setProfileConfigs(profileConfigs);
 
-    const floorsConfig = getFloorsConfig(floorsData, profileConfigs);
+    const floorsConfig = getFloorsConfig(
+      (floorsData && validateFloorPriceSchema(floorsData)) ? floorsData : undefined, profileConfigs);
     floorsConfig && conf?.setConfig(floorsConfig);
     configMerged();
   });
