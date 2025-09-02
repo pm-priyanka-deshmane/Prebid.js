@@ -389,6 +389,50 @@ export const getUtm = () => {
   return urlParams && urlParams.toString().includes(CONSTANTS.UTM) ? CONSTANTS.UTM_VALUES.TRUE : CONSTANTS.UTM_VALUES.FALSE;
 }
 
+const defaultSchemaFields = ['gptSlot', 'adUnitCode', 'mediaType', 'size', 'domain'];
+const supportedAdditionalSchemaFields = ['country', 'os', 'browser', 'utm', 'timeOfDay', 'deviceType', 'bidder'];
+
+function validateSchemaFields(schemaFields) {
+  const allSupportedFields = new Set([...defaultSchemaFields, ...supportedAdditionalSchemaFields]);
+  const unsupportedFields = schemaFields.filter(field => !allSupportedFields.has(field));
+  
+  return {
+    valid: unsupportedFields.length === 0,
+    unsupportedFields: unsupportedFields
+  };
+}
+
+function validateSchema1(data) {
+  let valid = true;
+  const fieldValidation = validateSchemaFields(data.schema.fields);
+  if (!fieldValidation.valid) {
+    console.log(`Unsupported schema fields: ${fieldValidation.unsupportedFields.join(', ')}`);
+    valid = false;
+  }
+
+  return valid;
+}
+
+function validateSchema2(data) {
+  let valid = true;
+  data.modelGroups.forEach((modelGroup, index) => {
+    const fieldValidation = validateSchemaFields(modelGroup.schema.fields);
+    if (!fieldValidation.valid) {
+      console.log(`Unsupported schema fields in modelGroup[${index}]: ${fieldValidation.unsupportedFields.join(', ')}`);
+      valid = false;
+    }
+  });
+  return valid;
+}
+
+function validateFloorPriceSchema(data) {
+  if (Array.isArray(data.modelGroups)) {
+    return validateSchema2(data);
+  } else {
+    return validateSchema1(data);
+  } 
+}
+
 export const getFloorsConfig = (floorsData, profileConfigs) => {
   if (!isPlainObject(profileConfigs) || isEmpty(profileConfigs)) {
     logError(`${CONSTANTS.LOG_PRE_FIX} profileConfigs is not an object or is empty`);
